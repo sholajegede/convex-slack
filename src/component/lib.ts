@@ -713,6 +713,11 @@ export const listRecentWebhookEvents = query({
   },
 });
 
+// Demo/debug stats panel -- collects every row in each of these 7 tables
+// just to count them, so this is O(total rows), not O(1). Fine for a small
+// test workspace; a production dashboard at real scale should track counts
+// incrementally (e.g. a running counter row updated alongside each insert)
+// instead of calling this on every render.
 export const getStats = query({
   args: {},
   returns: v.object({
