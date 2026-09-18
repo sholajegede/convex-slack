@@ -26,6 +26,43 @@ function formatSlackTs(ts?: string): string {
   return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+// Slack sends reactions as bare shortcodes (`thumbsup`, `slightly_smiling_face`),
+// never the glyph itself -- this is the same short-name -> emoji table Slack's
+// own emoji picker is built from, trimmed to the reactions people actually use.
+const EMOJI_SHORTCODES: Record<string, string> = {
+  "+1": "👍", thumbsup: "👍", "-1": "👎", thumbsdown: "👎",
+  smile: "😄", smiley: "😃", slightly_smiling_face: "🙂", grinning: "😀",
+  laughing: "😆", joy: "😂", rofl: "🤣", wink: "😉", blush: "😊",
+  sunglasses: "😎", thinking_face: "🤔", neutral_face: "😐", expressionless: "😑",
+  confused: "😕", slightly_frowning_face: "🙁", disappointed: "😞", cry: "😢",
+  sob: "😭", scream: "😱", angry: "😠", rage: "😡", exploding_head: "🤯",
+  partying_face: "🥳", star_struck: "🤩", face_with_rolling_eyes: "🙄",
+  raised_hands: "🙌", clap: "👏", pray: "🙏", muscle: "💪", ok_hand: "👌",
+  wave: "👋", point_up: "☝️", eyes: "👀", heart: "❤️", heart_eyes: "😍",
+  broken_heart: "💔", two_hearts: "💕", sparkling_heart: "💖",
+  green_heart: "💚", blue_heart: "💙", yellow_heart: "💛", purple_heart: "💜",
+  fire: "🔥", tada: "🎉", 100: "💯", sparkles: "✨", zap: "⚡", boom: "💥",
+  rocket: "🚀", star: "⭐", star2: "🌟", bulb: "💡", gem: "💎",
+  trophy: "🏆", medal: "🏅", first_place_medal: "🥇",
+  white_check_mark: "✅", heavy_check_mark: "✔️", x: "❌",
+  warning: "⚠️", question: "❓", exclamation: "❗", no_entry: "⛔",
+  eyes_closed: "🙈", see_no_evil: "🙈", speak_no_evil: "🙊", hear_no_evil: "🙉",
+  skull: "💀", ghost: "👻", alien: "👽", robot_face: "🤖", poop: "💩",
+  coffee: "☕", pizza: "🍕", beers: "🍻", tada2: "🎊",
+  calendar: "📅", memo: "📝", pencil2: "✏️", mag: "🔍",
+  lock: "🔒", unlock: "🔓", key: "🔑", gear: "⚙️", hammer_and_wrench: "🛠️",
+  package: "📦", inbox_tray: "📥", outbox_tray: "📤", email: "📧",
+  bell: "🔔", no_bell: "🔕", loud_sound: "🔊", speech_balloon: "💬",
+  thought_balloon: "💭", red_circle: "🔴", large_blue_circle: "🔵",
+  white_circle: "⚪", black_circle: "⚫", large_green_circle: "🟢",
+  moneybag: "💰", dollar: "💵", chart_with_upwards_trend: "📈",
+};
+
+function emojiFor(shortcode: string): string {
+  const base = shortcode.split("::")[0];
+  return EMOJI_SHORTCODES[base] ?? `:${base}:`;
+}
+
 function Avatar({ seed, size = 28 }: { seed: string; size?: number }) {
   return (
     <div
@@ -283,37 +320,202 @@ function ReactionRow({ teamId, channelId, ts }: { teamId: string; channelId: str
   const reactions = useQuery(api.example.listReactions, { teamId, channelId, ts });
   if (!reactions || reactions.length === 0) return null;
   return (
-    <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
+    <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
       {reactions
         .filter((r) => r.userIds.length > 0)
         .map((r) => (
           <span
             key={r._id}
-            className="mono"
+            title={`:${r.reaction}:`}
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 5,
               background: "var(--panel-bg-raised)",
               border: "1px solid var(--border)",
               borderRadius: 999,
-              padding: "1px 8px",
-              fontSize: 12,
+              padding: "3px 9px 3px 7px",
+              fontSize: 13,
               color: "var(--text-muted)",
+              cursor: "default",
             }}
           >
-            :{r.reaction}: {r.userIds.length}
+            <span style={{ fontSize: 15, lineHeight: 1 }}>{emojiFor(r.reaction)}</span>
+            <span className="mono" style={{ fontSize: 11.5 }}>
+              {r.userIds.length}
+            </span>
           </span>
         ))}
     </div>
   );
 }
 
-function MessagesPanel({ teamId, channelId }: { teamId: string; channelId: string }) {
+const TOOLBAR_ICONS: Array<{ label: string; glyph: React.ReactNode; style?: React.CSSProperties }> = [
+  { label: "Bold", glyph: "B", style: { fontWeight: 800 } },
+  { label: "Italic", glyph: "i", style: { fontStyle: "italic", fontWeight: 700 } },
+  { label: "Strikethrough", glyph: "S", style: { textDecoration: "line-through", fontWeight: 700 } },
+  { label: "Link", glyph: "🔗" },
+];
+
+function ToolbarButton({
+  title,
+  onClick,
+  disabled,
+  children,
+}: {
+  title: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        width: 26,
+        height: 26,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        border: "none",
+        borderRadius: 5,
+        background: "transparent",
+        color: "var(--text-muted)",
+        fontSize: 13,
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.4 : 1,
+      }}
+      onMouseEnter={(e) => !disabled && (e.currentTarget.style.background = "var(--panel-bg-raised)")}
+      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Composer({ teamId, channelId }: { teamId: string; channelId: string }) {
   const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const sendMessage = useAction(api.example.sendMessage);
+  const uploadDemoFile = useAction(api.example.uploadDemoFile);
+
+  const submit = async () => {
+    if (!text.trim() || sending) return;
+    setSending(true);
+    await sendMessage({ teamId, channel: channelId, text });
+    setText("");
+    setSending(false);
+  };
+
+  return (
+    <div style={{ padding: "12px 28px 22px", borderTop: "1px solid var(--border-soft)" }}>
+      <div
+        style={{
+          background: "var(--panel-bg)",
+          border: `1.5px solid ${focused ? "var(--slack-purple-bright)" : "var(--border)"}`,
+          borderRadius: 10,
+          padding: "10px 12px 6px",
+          transition: "border-color 120ms ease",
+        }}
+      >
+        <textarea
+          rows={1}
+          value={text}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onChange={(e) => {
+            setText(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void submit();
+            }
+          }}
+          placeholder={`Message #${channelId}`}
+          style={{
+            width: "100%",
+            resize: "none",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            color: "var(--text)",
+            fontSize: 14.5,
+            lineHeight: 1.5,
+            fontFamily: "inherit",
+            display: "block",
+          }}
+        />
+        <div style={{ display: "flex", alignItems: "center", marginTop: 4, paddingBottom: 2, gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              flex: "1 1 auto",
+              minWidth: 0,
+              overflowX: "auto",
+            }}
+          >
+            {TOOLBAR_ICONS.map((icon) => (
+              <ToolbarButton key={icon.label} title={icon.label}>
+                <span style={icon.style}>{icon.glyph}</span>
+              </ToolbarButton>
+            ))}
+            <span style={{ width: 1, height: 16, background: "var(--border)", margin: "0 4px", flexShrink: 0 }} />
+            <ToolbarButton title="Emoji">🙂</ToolbarButton>
+            <ToolbarButton
+              title="Upload a test file (slack.uploadFile)"
+              disabled={uploading}
+              onClick={async () => {
+                setUploading(true);
+                await uploadDemoFile({ teamId, channelId });
+                setUploading(false);
+              }}
+            >
+              {uploading ? "…" : "📎"}
+            </ToolbarButton>
+          </div>
+          <button
+            disabled={!text.trim() || sending}
+            onClick={submit}
+            title="Send"
+            style={{
+              width: 30,
+              height: 30,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: text.trim() ? "var(--slack-purple)" : "var(--panel-bg-raised)",
+              color: text.trim() ? "#fff" : "var(--text-faint)",
+              border: "none",
+              borderRadius: 999,
+              fontSize: 14,
+              cursor: text.trim() ? "pointer" : "default",
+              transition: "background 120ms ease",
+            }}
+          >
+            ➤
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MessagesPanel({ teamId, channelId }: { teamId: string; channelId: string }) {
   const messages = useQuery(
     api.example.listMessages,
     teamId && channelId ? { teamId, channelId } : "skip",
   );
-  const sendMessage = useAction(api.example.sendMessage);
-  const [sending, setSending] = useState(false);
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
@@ -350,63 +552,7 @@ function MessagesPanel({ teamId, channelId }: { teamId: string; channelId: strin
         ))}
       </div>
 
-      <div style={{ padding: "14px 28px 22px", borderTop: "1px solid var(--border-soft)" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            background: "var(--panel-bg)",
-            border: "1px solid var(--border)",
-            borderRadius: 999,
-            padding: "6px 6px 6px 16px",
-          }}
-        >
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key === "Enter" && text && !sending) {
-                setSending(true);
-                await sendMessage({ teamId, channel: channelId, text });
-                setText("");
-                setSending(false);
-              }
-            }}
-            placeholder={`Message #${channelId}`}
-            style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "var(--text)",
-              fontSize: 14,
-            }}
-          />
-          <button
-            disabled={!text || sending}
-            onClick={async () => {
-              setSending(true);
-              await sendMessage({ teamId, channel: channelId, text });
-              setText("");
-              setSending(false);
-            }}
-            style={{
-              background: "var(--slack-purple)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 999,
-              padding: "8px 18px",
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: text ? "pointer" : "default",
-              opacity: text ? 1 : 0.5,
-            }}
-          >
-            Send
-          </button>
-        </div>
-      </div>
+      <Composer teamId={teamId} channelId={channelId} />
     </div>
   );
 }
@@ -421,8 +567,9 @@ function ActivityRail({ teamId }: { teamId: string }) {
   return (
     <div
       style={{
-        width: 320,
-        minWidth: 320,
+        width: 300,
+        minWidth: 240,
+        flexShrink: 1,
         borderLeft: "1px solid var(--border)",
         background: "var(--convex-black-soft)",
         padding: 18,
