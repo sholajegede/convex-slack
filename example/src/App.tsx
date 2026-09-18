@@ -161,6 +161,7 @@ function Sidebar({
   const authorizeUrl = useQuery(api.example.getAuthorizationUrl, {
     redirectUri: `${import.meta.env.VITE_CONVEX_SITE_URL}/slack/oauth/callback`,
   });
+  const leaveChannel = useAction(api.example.leaveChannel);
 
   return (
     <div
@@ -277,11 +278,29 @@ function Sidebar({
                   }}
                 >
                   <span style={{ color: "var(--text-faint)" }}>#</span>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                     {channel.name ?? channel.channelId}
                   </span>
                   {channel.botIsMember && (
-                    <span style={{ marginLeft: "auto", width: 6, height: 6, borderRadius: 999, background: "#2f9e6e" }} />
+                    <>
+                      <span
+                        role="button"
+                        title="Leave this channel (conversations.leave) -- for testing member_left_channel"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void leaveChannel({ teamId, channelId: channel.channelId });
+                        }}
+                        style={{
+                          fontSize: 10,
+                          color: "var(--text-faint)",
+                          marginRight: 4,
+                          cursor: "pointer",
+                        }}
+                      >
+                        leave
+                      </span>
+                      <span style={{ width: 6, height: 6, borderRadius: 999, background: "#2f9e6e", flexShrink: 0 }} />
+                    </>
                   )}
                 </button>
               );
