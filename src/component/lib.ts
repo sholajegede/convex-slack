@@ -190,7 +190,7 @@ export const listInstallations = query({
 // Upsert-by-teamId: the OAuth callback calls this on every install *and*
 // every reinstall/rescope, so a workspace clicking "Add to Slack" a second
 // time (e.g. to grant a new scope) updates the same row instead of creating
-// a duplicate -- same idempotent-seed posture as this campaign app's own
+// a duplicate — same idempotent-seed posture as this campaign app's own
 // seed.ts, applied here to a live OAuth callback instead of a script.
 export const upsertInstallation = mutation({
   args: {
@@ -433,7 +433,7 @@ export const recordMessage = mutation({
       .unique();
     // A message_changed (edit) event or our own postMessage confirmation can
     // arrive after the row already exists (e.g. an optimistic local record
-    // followed by the event echo) -- treat this as the same upsert posture
+    // followed by the event echo) — treat this as the same upsert posture
     // as everywhere else rather than throwing on a duplicate ts.
     if (existing) {
       await ctx.db.patch(existing._id, { ...args, updatedAt: now });
@@ -499,7 +499,7 @@ export const listReactionsByMessage = query({
 // Applies a single reaction_added/reaction_removed delta. Not a plain
 // upsert like the tables above: Slack sends one event per (user, emoji)
 // toggle, so this reads the current row, adds/removes exactly one userId
-// from its array, and only then writes -- mirroring convex-livekit's
+// from its array, and only then writes — mirroring convex-livekit's
 // patchParticipant pattern of folding a partial event into existing state
 // rather than replacing it.
 export const applyReactionDelta = mutation({
@@ -521,7 +521,7 @@ export const applyReactionDelta = mutation({
       )
       .unique();
     if (!existing) {
-      if (!args.added) return null; // removing from a row we never saw -- nothing to do
+      if (!args.added) return null; // removing from a row we never saw — nothing to do
       await ctx.db.insert("reactions", {
         teamId: args.teamId,
         channelId: args.channelId,

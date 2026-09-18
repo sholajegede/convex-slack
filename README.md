@@ -2,8 +2,8 @@
 
 Install your app into any number of Slack workspaces, sync channels,
 messages, reactions, and users into your Convex database reactively, and
-drive the full Slack platform -- messaging, threads, Block Kit modals,
-slash commands, shortcuts, and files -- directly from Convex functions.
+drive the full Slack platform — messaging, threads, Block Kit modals,
+slash commands, shortcuts, and files — directly from Convex functions.
 
 [![npm version](https://img.shields.io/npm/v/convex-slack.svg)](https://www.npmjs.com/package/convex-slack)
 [![Convex Component](https://www.convex.dev/components/badge/sholajegede/convex-slack)](https://www.convex.dev/components/convex-slack)
@@ -22,10 +22,10 @@ const slack = new Slack(components.convexSlack, {
 await slack.postMessage(ctx, {
   teamId,
   channel: "C0123456789",
-  text: "Deal closed -- invoice sent.",
+  text: "Deal closed — invoice sent.",
 });
 
-// Stays live from here -- messages, reactions, and interactions all update
+// Stays live from here — messages, reactions, and interactions all update
 // reactively as Slack's events arrive.
 const messages = useQuery(api.example.listMessages, { teamId, channelId });
 ```
@@ -36,42 +36,42 @@ const messages = useQuery(api.example.listMessages, { teamId, channelId });
 
 `convex-slack` gives your Convex app a live, queryable view of every Slack
 workspace it's installed into, plus a full set of actions for driving the
-platform -- kept in sync by Slack's Events API and interactivity payloads:
+platform — kept in sync by Slack's Events API and interactivity payloads:
 
-- **Multi-workspace OAuth install** -- `getAuthorizationUrl` / `exchangeCode`
+- **Multi-workspace OAuth install** — `getAuthorizationUrl` / `exchangeCode`
   implement the full OAuth v2 authorization-code flow, storing one bot token
   per `team_id` so a single deployment serves every workspace that installs
   your app. Token rotation (refresh tokens) is handled transparently:
   `resolveToken` refreshes and persists a rotated token automatically before
   it expires.
-- **Reactive messages, threads, and reactions** -- `message`,
+- **Reactive messages, threads, and reactions** — `message`,
   `message_changed`, `message_deleted`, `reaction_added`, and
   `reaction_removed` events keep a `messages` and `reactions` table current,
   so `useQuery` in your React app re-renders as a conversation happens.
-- **Channels and users, synced on demand** -- `conversations.list/info` and
+- **Channels and users, synced on demand** — `conversations.list/info` and
   `users.list/info` calls (yours or this component's own) populate `channels`
   and `users`, plus membership/rename/archive events keep them current
   without a full resync.
-- **Full messaging** -- `postMessage`, `postEphemeral`, `updateMessage`,
+- **Full messaging** — `postMessage`, `postEphemeral`, `updateMessage`,
   `deleteMessage`, `scheduleMessage`/`deleteScheduledMessage`, and
   `addReaction`/`removeReaction`, all callable directly from a Convex action.
-- **Block Kit modals and App Home** -- `openView`/`pushView`/`updateView`
+- **Block Kit modals and App Home** — `openView`/`pushView`/`updateView`
   wrap `views.open`/`views.push`/`views.update` for interactive modals, and
   `publishHomeView` wraps `views.publish` for a per-user App Home tab.
-- **Slash commands and interactivity, verified and logged** -- three
+- **Slash commands and interactivity, verified and logged** — three
   signed `httpAction` handlers (`eventsHandler`, `interactivityHandler`,
   `commandsHandler`) verify every request against your signing secret
   before anything is recorded, and every button click, modal submission,
   shortcut invocation, and slash command is logged to `interactions` /
   `commands` for your own handlers to react to.
-- **Modern file uploads** -- `uploadFile` drives the current
+- **Modern file uploads** — `uploadFile` drives the current
   `files.getUploadURLExternal` -> upload -> `files.completeUploadExternal`
   sequence (the old `files.upload` is deprecated and never used here).
-- **Resilient Web API calls** -- every outbound call retries on `429`/`5xx`
+- **Resilient Web API calls** — every outbound call retries on `429`/`5xx`
   responses and network failures with exponential backoff and jitter,
   honoring Slack's `Retry-After` header (and the JSON-level `ratelimited`
   error some methods return).
-- **Cryptographically verified inbound requests** -- every Events API,
+- **Cryptographically verified inbound requests** — every Events API,
   Interactivity, and Slash Command delivery is verified against Slack's
   `v0=HMAC-SHA256(signingSecret, "v0:{timestamp}:{body}")` scheme, with a
   5-minute replay window, before it's trusted.
@@ -136,7 +136,7 @@ needs (at minimum `chat:write`; add `channels:history`, `reactions:read`,
 `users:read`, `files:write`, and others as your app requires) and a
 Redirect URL pointing at your OAuth callback (step 5). Under **Event
 Subscriptions**, turn events on and point the Request URL at your
-`eventsHandler` (step 4) -- Slack verifies it live, so deploy first. Under
+`eventsHandler` (step 4) — Slack verifies it live, so deploy first. Under
 **Interactivity & Shortcuts**, do the same for `interactivityHandler`. Under
 **Slash Commands**, create each command with its Request URL pointed at
 `commandsHandler`.
@@ -246,9 +246,9 @@ export const listMessages = query({
 await slack.postMessage(ctx, {
   teamId,
   channel: "C0123456789",
-  text: "Deal closed -- invoice sent.",
+  text: "Deal closed — invoice sent.",
   blocks: [
-    { type: "section", text: { type: "mrkdwn", text: "*Deal closed* -- invoice sent." } },
+    { type: "section", text: { type: "mrkdwn", text: "*Deal closed* — invoice sent." } },
   ],
 });
 ```
@@ -267,7 +267,7 @@ await slack.postMessage(ctx, {
 ### Open a modal from a slash command
 
 Your `commandsHandler` already recorded the invocation (with its
-`trigger_id`) to the `commands` table -- react to it from an action that
+`trigger_id`) to the `commands` table — react to it from an action that
 runs right after, while the `trigger_id` is still valid (3 seconds):
 
 ```ts
@@ -300,7 +300,7 @@ processed it):
 
 ```ts
 await slack.respondToUrl(responseUrl, {
-  text: "Got it -- invoice sent.",
+  text: "Got it — invoice sent.",
   replace_original: true,
 });
 ```
@@ -321,7 +321,7 @@ await slack.uploadFile(ctx, {
 
 If your app has [token rotation](https://docs.slack.dev/authentication/using-token-rotation/)
 enabled, every method above refreshes an expiring bot token automatically
-(via `resolveToken`) and persists the rotated pair -- no extra code needed.
+(via `resolveToken`) and persists the rotated pair — no extra code needed.
 Apps without rotation enabled simply never populate `botRefreshToken`/
 `botTokenExpiresAt`, and `resolveToken` returns the stored token as-is.
 
@@ -329,7 +329,7 @@ Apps without rotation enabled simply never populate `botRefreshToken`/
 
 `messages`, `reactions`, `user_change`/`team_join`, channel
 create/rename/archive, and app uninstall/token revocation are all synced
-automatically as Slack's Events API delivers them -- no polling required.
+automatically as Slack's Events API delivers them — no polling required.
 `channels` and `users` are otherwise populated lazily: the first time your
 app calls `listConversationsFromSlack`, `getConversationInfo`,
 `getUserInfo`, or `listUsersFromSlack`, the same "sync what you're told,
@@ -350,7 +350,7 @@ recording/editing/deletion, reaction deltas (add and remove converging on
 the right set of reactors), interaction and command logging, file records,
 scheduled-message status transitions, and webhook idempotency via
 `checkAndRecordEvent`. `example/convex/http.test.ts` separately exercises
-the three signed `httpAction` handlers end to end -- signing requests with
+the three signed `httpAction` handlers end to end — signing requests with
 an independent HMAC-SHA256 implementation (not the component's own) to
 verify each one rejects a missing signature, a wrong secret, a stale
 timestamp, and a tampered body, correctly answers the Events API's

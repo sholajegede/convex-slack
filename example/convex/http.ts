@@ -15,7 +15,7 @@ const http = httpRouter();
 http.route({ path: "/slack/events", method: "POST", handler: slack.eventsHandler });
 
 // The default `slack.interactivityHandler` just records every button click,
-// modal submission, and shortcut invocation -- it doesn't know what any
+// modal submission, and shortcut invocation — it doesn't know what any
 // particular callback_id should *do*. To react to one (here: opening the
 // invoice modal when the "Open invoice" shortcut fires) an app wraps the
 // handler instead of mounting it directly, so it can call `slack.openView`

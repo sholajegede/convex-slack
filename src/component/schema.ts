@@ -3,7 +3,7 @@ import { v } from "convex/values";
 
 export default defineSchema({
   // One row per Slack workspace this app is installed into. Keyed by Slack's
-  // `team_id`, not `_id` -- a workspace can uninstall and reinstall the app
+  // `team_id`, not `_id` — a workspace can uninstall and reinstall the app
   // (or grant more scopes) and it must resolve back to the same row. Kept
   // (not deleted) on uninstall via `uninstalledAt`, same convention as
   // convex-livekit's rooms/participants: a reactive "what happened to my
@@ -17,14 +17,14 @@ export default defineSchema({
     enterpriseId: v.optional(v.string()),
     appId: v.string(),
     botUserId: v.string(),
-    // The bot token (`xoxb-...`). Never exposed to a browser/client -- read
+    // The bot token (`xoxb-...`). Never exposed to a browser/client — read
     // it server-side only, same treatment as convex-livekit's apiSecret.
     botToken: v.string(),
     botScope: v.string(), // comma-separated granted bot scopes, verbatim from oauth.v2.access
     // Present only when Slack's token rotation is enabled for this app.
     // When set, callers must refresh via oauth.v2.access with
     // grant_type=refresh_token before botTokenExpiresAt and persist the new
-    // pair -- see client/index.ts's ensureFreshToken.
+    // pair — see client/index.ts's ensureFreshToken.
     botRefreshToken: v.optional(v.string()),
     botTokenExpiresAt: v.optional(v.number()),
     // The user who completed the OAuth flow. Distinct from any per-user
@@ -32,7 +32,7 @@ export default defineSchema({
     // from `authed_user.access_token` is the installing app's own concern
     // if it needs one, not persisted here.
     authedUserId: v.string(),
-    // Set only when the `incoming-webhook` scope was granted -- lets a
+    // Set only when the `incoming-webhook` scope was granted — lets a
     // simple integration post to the channel the installer picked without
     // needing a channel id up front.
     incomingWebhookUrl: v.optional(v.string()),
@@ -41,13 +41,13 @@ export default defineSchema({
     installedAt: v.number(),
     updatedAt: v.number(),
     // Set by the app_uninstalled / tokens_revoked events. A row with this
-    // set is a dead install kept for history/audit -- every public method
+    // set is a dead install kept for history/audit — every public method
     // that resolves a token must treat it as "not installed".
     uninstalledAt: v.optional(v.number()),
   }).index("by_teamId", ["teamId"]),
 
   // Lazily-populated cache of conversations (public/private channels, DMs,
-  // group DMs) the bot has seen -- via conversations.list/info calls this
+  // group DMs) the bot has seen — via conversations.list/info calls this
   // component makes, or via channel-shape events (channel_created,
   // channel_rename, member_joined_channel, ...). Not a guaranteed-complete
   // mirror of the workspace; it only has what the bot has been told about
@@ -87,7 +87,7 @@ export default defineSchema({
     isBot: v.optional(v.boolean()),
     isAdmin: v.optional(v.boolean()),
     // Slack's own "deactivated" flag (from the `deleted` field on the user
-    // object / a user_change event), not a row deletion -- kept for the
+    // object / a user_change event), not a row deletion — kept for the
     // same reason installations keep uninstalledAt instead of vanishing.
     deleted: v.optional(v.boolean()),
     updatedAt: v.number(),
@@ -104,7 +104,7 @@ export default defineSchema({
   messages: defineTable({
     teamId: v.string(),
     channelId: v.string(),
-    // Slack's message `ts` -- a string like "1699999999.000100" that is
+    // Slack's message `ts` — a string like "1699999999.000100" that is
     // simultaneously the message's unique id *and* its timestamp. Never
     // parse it as a display timestamp without knowing this; treat it as an
     // opaque id first, a float-seconds timestamp second.
@@ -125,7 +125,7 @@ export default defineSchema({
 
   // One row per (message, emoji) pair, holding the current set of reactors.
   // Slack's reaction_added/reaction_removed events are per-user deltas, not
-  // a full snapshot -- mirroring convex-livekit's ingress table, this is
+  // a full snapshot — mirroring convex-livekit's ingress table, this is
   // upserted incrementally rather than replaced wholesale each time. See
   // client/index.ts's applyReactionDelta.
   reactions: defineTable({
@@ -157,7 +157,7 @@ export default defineSchema({
     triggerId: v.optional(v.string()),
     // The full decoded interaction payload, verbatim, as JSON. Kept whole
     // (rather than picked apart into columns) because block_actions/
-    // view_submission shapes vary per app and per block -- callers that
+    // view_submission shapes vary per app and per block — callers that
     // need structured access parse this themselves; this table exists so
     // nothing is ever silently dropped on the floor.
     payload: v.string(),
@@ -181,7 +181,7 @@ export default defineSchema({
     .index("by_team_and_command", ["teamId", "command"]),
 
   // One row per file uploaded through this component's uploadFile (the
-  // getUploadURLExternal -> PUT -> completeUploadExternal sequence -- see
+  // getUploadURLExternal -> PUT -> completeUploadExternal sequence — see
   // client/index.ts). Not a mirror of every file in the workspace, only
   // ones this app itself uploaded, so a reactive UI can show upload
   // progress/history without another round trip to files.info.
@@ -204,7 +204,7 @@ export default defineSchema({
   // One row per chat.scheduleMessage call, kept in sync with
   // scheduled_message_sent / scheduled_message_failed webhook events (an
   // optional subscription; a workspace that never enables the event will
-  // simply keep the row at "scheduled" past postAt, which is fine -- this
+  // simply keep the row at "scheduled" past postAt, which is fine — this
   // is a nice-to-have status field, not a source of truth Slack depends on
   // for anything).
   scheduledMessages: defineTable({
@@ -223,7 +223,7 @@ export default defineSchema({
   // Events API idempotency, identical convention to every other component
   // in this set (convex-livekit, convex-github, convex-linear, ...): Slack
   // retries an Events API delivery that doesn't get a fast 200, and retried
-  // deliveries carry the same `event_id` -- this is the dedupe key.
+  // deliveries carry the same `event_id` — this is the dedupe key.
   webhookEvents: defineTable({
     eventId: v.string(),
     eventType: v.string(),

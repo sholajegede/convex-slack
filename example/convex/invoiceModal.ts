@@ -1,4 +1,4 @@
-// Shared "New invoice" modal view -- opened by http.ts's interactivity
+// Shared "New invoice" modal view — opened by http.ts's interactivity
 // handler when the "Open invoice" shortcut fires. Kept in one place so the
 // shortcut wiring and the view definition can't drift apart.
 export const invoiceModalView = {

@@ -20,7 +20,7 @@ export type AuthorizeUrlArgs = {
   scopes: string[];
   /** Optional user scopes, for acting on behalf of the installing user. */
   userScopes?: string[];
-  /** Opaque value round-tripped back to your redirect -- verify it yourself to guard against CSRF. */
+  /** Opaque value round-tripped back to your redirect — verify it yourself to guard against CSRF. */
   state?: string;
 };
 
@@ -40,7 +40,7 @@ export type PostMessageArgs = {
   unfurlMedia?: boolean;
   /**
    * Overrides the bot's display name/avatar for this one message. Requires
-   * the `chat:write.customize` scope -- without it Slack silently ignores
+   * the `chat:write.customize` scope — without it Slack silently ignores
    * these fields and posts under the app's default identity.
    */
   username?: string;
@@ -108,7 +108,7 @@ export type UploadFileArgs = {
 };
 
 // ---------------------------------------------------------------------------
-// Crypto & retry helpers (Web Crypto only -- runs in Convex's V8 isolate,
+// Crypto & retry helpers (Web Crypto only — runs in Convex's V8 isolate,
 // same constraint convex-livekit and convex-github's webhook verification
 // are written under; no node:crypto).
 // ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ const MAX_RETRIES = 5;
 // and network failures with exponential backoff, honoring Slack's own
 // `Retry-After` header on 429s exactly like convex-livekit's twirpRequest
 // honors LiveKit's. Slack's Web API always answers 200 with a JSON body
-// (even for application-level errors -- `ok: false` + `error`), so a
+// (even for application-level errors — `ok: false` + `error`), so a
 // non-2xx here means a transport/proxy failure, not a Slack error; those
 // are surfaced as SlackApiError from the JSON body instead.
 async function slackApiRequest<T = Record<string, unknown>>(
@@ -174,7 +174,7 @@ async function slackApiRequest<T = Record<string, unknown>>(
         : "application/x-www-form-urlencoded; charset=utf-8";
       const headers: Record<string, string> = { "Content-Type": contentType };
       // oauth.v2.access authenticates via client_id/client_secret in the
-      // body, not a bearer token -- callers pass an empty token for it, so
+      // body, not a bearer token — callers pass an empty token for it, so
       // no Authorization header goes out at all in that one case.
       if (token) headers.Authorization = `Bearer ${token}`;
       response = await fetch(`https://slack.com/api/${method}`, {
@@ -256,7 +256,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 export class Slack {
-  /** Mount on any POST route -- this is where Slack's Events API subscription must point. */
+  /** Mount on any POST route — this is where Slack's Events API subscription must point. */
   eventsHandler: ReturnType<typeof httpActionGeneric>;
   /** Mount on the route configured under "Interactivity & Shortcuts" (buttons, modals, shortcuts). */
   interactivityHandler: ReturnType<typeof httpActionGeneric>;
@@ -285,7 +285,7 @@ export class Slack {
       const body = JSON.parse(rawBody) as Record<string, unknown>;
 
       // The one-time URL verification handshake Slack performs when you
-      // first save an Events API request URL -- echo the challenge back,
+      // first save an Events API request URL — echo the challenge back,
       // unsigned-body-shape and all, before any of our own logic runs.
       if (body.type === "url_verification") {
         return jsonResponse({ challenge: body.challenge });
@@ -325,7 +325,7 @@ export class Slack {
       }
 
       // Interactivity payloads arrive form-encoded with a single `payload`
-      // field holding the actual JSON -- distinct from the Events API,
+      // field holding the actual JSON — distinct from the Events API,
       // which posts JSON directly as the whole body.
       const form = new URLSearchParams(rawBody);
       const payloadRaw = form.get("payload");
@@ -352,7 +352,7 @@ export class Slack {
       }
 
       // view_submission can reject the submission (validation errors) by
-      // returning a `response_action` body -- callers that need this should
+      // returning a `response_action` body — callers that need this should
       // wrap interactivityHandler rather than use it directly; the default
       // here is a plain ack, which is correct for block_actions/shortcut/
       // view_closed and for a view_submission with no validation to do.
@@ -389,7 +389,7 @@ export class Slack {
         responseUrl: form.get("response_url") ?? undefined,
       });
 
-      // Ack with nothing visible by default (empty 200) -- most apps open a
+      // Ack with nothing visible by default (empty 200) — most apps open a
       // modal with the trigger_id instead of replying inline; callers that
       // want an immediate text reply should build their own handler on top
       // of the recorded row this call already wrote, or reply via
@@ -464,7 +464,7 @@ export class Slack {
   /**
    * Refreshes a rotated bot token using the stored refresh token. Only
    * meaningful for apps with token rotation enabled (Slack issues a
-   * `refresh_token` + `expires_in` in that case) -- a no-op (returns null)
+   * `refresh_token` + `expires_in` in that case) — a no-op (returns null)
    * for apps without rotation, since resolveToken's tokens simply don't
    * expire for them. Safe to call proactively; resolveToken also calls this
    * automatically when a stored token is close to expiring.
@@ -498,7 +498,7 @@ export class Slack {
    * Resolves a live bot token for a team, refreshing it first if rotation
    * is enabled and the stored token is within 5 minutes of expiring.
    * Throws if the workspace was never installed, or has since uninstalled
-   * (see installations.uninstalledAt) -- every Web API method below calls
+   * (see installations.uninstalledAt) — every Web API method below calls
    * this before making a request.
    */
   private async resolveToken(ctx: RunQueryCtx & RunMutationCtx, teamId: string): Promise<string> {
@@ -546,7 +546,7 @@ export class Slack {
     const token = await this.resolveToken(ctx, args.teamId);
     // Ephemeral messages are never delivered as a message_* event and only
     // the requesting user ever sees them, so there's nothing durable to
-    // record in the messages table -- this is a fire-and-forget send.
+    // record in the messages table — this is a fire-and-forget send.
     return await slackApiRequest<{ message_ts: string }>(token, "chat.postEphemeral", {
       channel: args.channel,
       user: args.user,
@@ -624,7 +624,7 @@ export class Slack {
       timestamp: args.ts,
       name: args.name,
     });
-    // Optimistically reflect our own action locally -- the reaction_added
+    // Optimistically reflect our own action locally — the reaction_added
     // event for our own bot user will also arrive and apply the same
     // delta again, which applyReactionDelta's Set-based dedupe absorbs
     // harmlessly.
@@ -642,7 +642,7 @@ export class Slack {
 
   /**
    * Posts a followup to a `response_url` captured from a slash command or
-   * interactivity payload. Not team-scoped -- response_url is a one-time,
+   * interactivity payload. Not team-scoped — response_url is a one-time,
    * pre-authenticated URL Slack hands you directly, good for up to 5 uses
    * within 30 minutes, so no bot token is needed or used here.
    */
@@ -844,7 +844,7 @@ export class Slack {
   // Modals (Block Kit views)
   // -------------------------------------------------------------------
 
-  /** trigger_id is only valid for 3 seconds and can only be used once -- call this immediately on receiving it. */
+  /** trigger_id is only valid for 3 seconds and can only be used once — call this immediately on receiving it. */
   async openView(ctx: RunQueryCtx & RunMutationCtx, args: OpenViewArgs) {
     const token = await this.resolveToken(ctx, args.teamId);
     return await slackApiRequest<{ view: Record<string, unknown> }>(token, "views.open", {
@@ -862,7 +862,7 @@ export class Slack {
     });
   }
 
-  /** Updates an already-open view by id -- use this from a block_actions handler, not a trigger_id (there isn't a fresh one). */
+  /** Updates an already-open view by id — use this from a block_actions handler, not a trigger_id (there isn't a fresh one). */
   async updateView(ctx: RunQueryCtx & RunMutationCtx, args: UpdateViewArgs) {
     const token = await this.resolveToken(ctx, args.teamId);
     return await slackApiRequest<{ view: Record<string, unknown> }>(token, "views.update", {
@@ -883,7 +883,7 @@ export class Slack {
 
   // -------------------------------------------------------------------
   // Files (the getUploadURLExternal -> PUT -> completeUploadExternal
-  // sequence -- files.upload is deprecated and this component never calls it)
+  // sequence — files.upload is deprecated and this component never calls it)
   // -------------------------------------------------------------------
 
   async uploadFile(ctx: RunQueryCtx & RunMutationCtx, args: UploadFileArgs) {
@@ -901,7 +901,7 @@ export class Slack {
       // Uint8Array's ArrayBufferLike generic doesn't structurally match
       // BodyInit under this project's lib config even though every real
       // fetch implementation (browser, Node, and Convex's own V8 isolate)
-      // accepts a Uint8Array body at runtime -- narrow the type at the
+      // accepts a Uint8Array body at runtime — narrow the type at the
       // call site rather than loosen it for every caller of uploadFile.
       body: args.content as BodyInit,
     });
@@ -938,7 +938,7 @@ export class Slack {
   }
 
   // -------------------------------------------------------------------
-  // Reactive reads -- thin passthroughs to the component's own queries,
+  // Reactive reads — thin passthroughs to the component's own queries,
   // same convention as convex-livekit's getRoom/listRooms/etc. Call these
   // from your own `query` functions so `useQuery` in a React app re-renders
   // as installs, messages, reactions, and interactions arrive.
@@ -1020,7 +1020,7 @@ function isInteractionType(
 
 // Dispatches one already-deduped Events API `event_callback` body to the
 // component tables it affects. Only fields this component actually models
-// are synced -- an event type with nothing to record (e.g. app_mention,
+// are synced — an event type with nothing to record (e.g. app_mention,
 // which is really just a `message` with extra routing) is a deliberate
 // no-op here rather than an attempt to mirror every Slack event verbatim.
 async function dispatchEvent(
@@ -1058,7 +1058,7 @@ async function dispatchEvent(
       return;
     }
 
-    // A plain new message, or a bot_message subtype -- both are worth
+    // A plain new message, or a bot_message subtype — both are worth
     // recording; other subtypes (channel_join, channel_topic, etc. --
     // Slack's system messages) are skipped, matching this component's
     // "sync what's actually a message a human or bot sent" scope.
@@ -1093,7 +1093,7 @@ async function dispatchEvent(
   }
 
   if (eventType === "member_joined_channel" || eventType === "member_left_channel") {
-    // Track the bot's own membership specifically -- see channels.botIsMember's
+    // Track the bot's own membership specifically — see channels.botIsMember's
     // doc comment in schema.ts. Other members joining/leaving isn't modeled
     // as a table of its own; conversations.members is the source of truth
     // for "who's in this channel" and this component doesn't try to

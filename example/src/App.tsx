@@ -27,7 +27,7 @@ function formatSlackTs(ts?: string): string {
 }
 
 // Slack sends reactions as bare shortcodes (`thumbsup`, `slightly_smiling_face`),
-// never the glyph itself -- this is the same short-name -> emoji table Slack's
+// never the glyph itself — this is the same short-name -> emoji table Slack's
 // own emoji picker is built from, trimmed to the reactions people actually use.
 const EMOJI_SHORTCODES: Record<string, string> = {
   "+1": "👍", thumbsup: "👍", "-1": "👎", thumbsdown: "👎",
@@ -285,7 +285,7 @@ function Sidebar({
                     <>
                       <span
                         role="button"
-                        title="Leave this channel (conversations.leave) -- for testing member_left_channel"
+                        title="Leave this channel (conversations.leave) — for testing member_left_channel"
                         onClick={(e) => {
                           e.stopPropagation();
                           void leaveChannel({ teamId, channelId: channel.channelId });
