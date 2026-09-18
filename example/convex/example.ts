@@ -20,6 +20,7 @@ export const getAuthorizationUrl = query({
         "chat:write.public",
         "channels:history",
         "channels:read",
+        "channels:manage",
         "groups:read",
         "reactions:read",
         "reactions:write",
@@ -100,6 +101,13 @@ export const uploadDemoFile = action({
       content,
       initialComment: "Here's a file uploaded straight from a Convex action.",
     });
+  },
+});
+
+export const leaveChannel = action({
+  args: { teamId: v.string(), channelId: v.string() },
+  handler: async (ctx, args) => {
+    return await slack.leaveConversation(ctx, { teamId: args.teamId, channel: args.channelId });
   },
 });
 
