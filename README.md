@@ -101,6 +101,7 @@ and are only reachable through the functions this component exposes.
     - [Upload a file](#upload-a-file)
   - [Token rotation](#token-rotation)
   - [What's synced automatically vs. on demand](#whats-synced-automatically-vs-on-demand)
+  - [Testing](#testing)
   - [License](#license)
 
 <!-- END: Include on https://convex.dev/components -->
@@ -331,6 +332,30 @@ automatically as Slack's Events API delivers them -- no polling required.
 app calls `listConversationsFromSlack`, `getConversationInfo`,
 `getUserInfo`, or `listUsersFromSlack`, the same "sync what you're told,
 backfill on demand" posture as the rest of this component.
+
+## Testing
+
+```sh
+npm run test
+npm run typecheck
+```
+
+Tests use [`convex-test`](https://www.npmjs.com/package/convex-test) at two
+levels. `src/component/lib.test.ts` covers the component's mutations and
+queries directly: installation lifecycle (install, token rotation, and
+`uninstalledAt` on revocation), channel and user upserts, message
+recording/editing/deletion, reaction deltas (add and remove converging on
+the right set of reactors), interaction and command logging, file records,
+scheduled-message status transitions, and webhook idempotency via
+`checkAndRecordEvent`. `example/convex/http.test.ts` separately exercises
+the three signed `httpAction` handlers end to end -- signing requests with
+an independent HMAC-SHA256 implementation (not the component's own) to
+verify each one rejects a missing signature, a wrong secret, a stale
+timestamp, and a tampered body, correctly answers the Events API's
+`url_verification` handshake, dedupes a retried event delivery, dispatches
+message/reaction/channel/membership events into the right rows, and logs
+`block_actions`, `view_submission`, `shortcut`, and slash command payloads
+from `interactivityHandler` and `commandsHandler`.
 
 ## License
 

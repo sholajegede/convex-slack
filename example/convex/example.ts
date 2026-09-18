@@ -66,6 +66,13 @@ export const listInteractions = query({
   },
 });
 
+export const listCommands = query({
+  args: { teamId: v.string() },
+  handler: async (ctx, args) => {
+    return await slack.listCommandsByTeam(ctx, args);
+  },
+});
+
 export const getStats = query({
   args: {},
   handler: async (ctx) => {
