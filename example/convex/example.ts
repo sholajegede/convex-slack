@@ -119,27 +119,3 @@ export const leaveChannel = action({
     return await slack.leaveConversation(ctx, { teamId: args.teamId, channel: args.channelId });
   },
 });
-
-export const openInvoiceModal = action({
-  args: { teamId: v.string(), triggerId: v.string() },
-  handler: async (ctx, args) => {
-    return await slack.openView(ctx, {
-      teamId: args.teamId,
-      triggerId: args.triggerId,
-      view: {
-        type: "modal",
-        callback_id: "invoice_modal",
-        title: { type: "plain_text", text: "New invoice" },
-        submit: { type: "plain_text", text: "Send" },
-        blocks: [
-          {
-            type: "input",
-            block_id: "amount",
-            label: { type: "plain_text", text: "Amount" },
-            element: { type: "plain_text_input", action_id: "value" },
-          },
-        ],
-      },
-    });
-  },
-});

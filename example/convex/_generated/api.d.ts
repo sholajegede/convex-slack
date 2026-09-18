@@ -10,6 +10,7 @@
 
 import type * as example from "../example.js";
 import type * as http from "../http.js";
+import type * as invoiceModal from "../invoiceModal.js";
 
 import type {
   ApiFromModules,
@@ -20,6 +21,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   example: typeof example;
   http: typeof http;
+  invoiceModal: typeof invoiceModal;
 }>;
 
 /**

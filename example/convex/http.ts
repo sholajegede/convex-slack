@@ -2,6 +2,7 @@ import { httpRouter } from "convex/server";
 import { components } from "./_generated/api";
 import { Slack, verifySlackSignature } from "../../src/client/index.js";
 import { httpAction } from "./_generated/server";
+import { invoiceModalView } from "./invoiceModal";
 
 const slack = new Slack(components.convexSlack, {
   clientId: process.env.SLACK_CLIENT_ID!,
@@ -57,24 +58,15 @@ const interactivityHandler = httpAction(async (ctx, request) => {
   }
 
   if (type === "shortcut" && callbackId === "open_invoice" && teamId && triggerId) {
-    await slack.openView(ctx, {
-      teamId,
-      triggerId,
-      view: {
-        type: "modal",
-        callback_id: "invoice_modal",
-        title: { type: "plain_text", text: "New invoice" },
-        submit: { type: "plain_text", text: "Send" },
-        blocks: [
-          {
-            type: "input",
-            block_id: "amount",
-            label: { type: "plain_text", text: "Amount" },
-            element: { type: "plain_text_input", action_id: "value" },
-          },
-        ],
-      },
-    });
+    // Slack still needs this ack even if opening the modal fails (a
+    // revoked install, an expired trigger_id, a transient API error) --
+    // swallow the error rather than let it turn into a 500 the user's
+    // shortcut click would otherwise appear to just silently eat.
+    try {
+      await slack.openView(ctx, { teamId, triggerId, view: invoiceModalView });
+    } catch (err) {
+      console.error("convex-slack example: failed to open invoice modal", err);
+    }
   }
 
   return new Response(JSON.stringify({}), { status: 200, headers: { "Content-Type": "application/json" } });
