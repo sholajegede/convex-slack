@@ -1,14 +1,79 @@
 :root {
   color-scheme: dark;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-body {
-  margin: 0;
-  background: #0f1115;
-  color: #e6e6e6;
+  /* Convex: near-black + warm cream, used for the app shell and high-contrast accents */
+  --convex-black: #0b0a09;
+  --convex-black-soft: #131110;
+  --convex-cream: #f5f0e6;
+
+  /* Slack purple, used for brand identity and active/primary states */
+  --slack-purple: #4a154b;
+  --slack-purple-bright: #7c3f8c;
+
+  /* Convex's stripe gradient */
+  --stripe-orange: #f5a623;
+  --stripe-red: #e0432b;
+  --stripe-purple: #7c3aed;
+  --gradient-stripe: linear-gradient(90deg, var(--stripe-orange), var(--stripe-red), var(--stripe-purple));
+
+  --bg: var(--convex-black);
+  --sidebar-bg: #100e0d;
+  --panel-bg: #171514;
+  --panel-bg-raised: #1d1a19;
+  --border: #2a2624;
+  --border-soft: #201d1b;
+  --text: #f2ede4;
+  --text-muted: #948d84;
+  --text-faint: #635d56;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+code,
+.mono {
+  font-family: var(--font-mono);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--slack-purple-bright);
+}
+
+button {
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
 }
