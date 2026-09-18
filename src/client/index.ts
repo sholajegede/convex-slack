@@ -38,6 +38,14 @@ export type PostMessageArgs = {
   replyBroadcast?: boolean;
   unfurlLinks?: boolean;
   unfurlMedia?: boolean;
+  /**
+   * Overrides the bot's display name/avatar for this one message. Requires
+   * the `chat:write.customize` scope -- without it Slack silently ignores
+   * these fields and posts under the app's default identity.
+   */
+  username?: string;
+  iconUrl?: string;
+  iconEmoji?: string;
 };
 
 export type PostEphemeralArgs = {
@@ -230,7 +238,7 @@ function formEncode(args: Record<string, unknown>): string {
 // See https://docs.slack.dev/authentication/verifying-requests-from-slack/.
 // A >5 minute clock skew is rejected as a possible replay, matching Slack's
 // own documented guidance.
-async function verifySlackSignature(
+export async function verifySlackSignature(
   signingSecret: string,
   timestamp: string,
   rawBody: string,
@@ -519,6 +527,9 @@ export class Slack {
       reply_broadcast: args.replyBroadcast,
       unfurl_links: args.unfurlLinks,
       unfurl_media: args.unfurlMedia,
+      username: args.username,
+      icon_url: args.iconUrl,
+      icon_emoji: args.iconEmoji,
     });
     await ctx.runMutation(this.component.lib.recordMessage, {
       teamId: args.teamId,

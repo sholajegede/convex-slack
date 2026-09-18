@@ -18,6 +18,7 @@ export const getAuthorizationUrl = query({
       scopes: [
         "chat:write",
         "chat:write.public",
+        "chat:write.customize",
         "channels:history",
         "channels:read",
         "channels:manage",
@@ -82,7 +83,15 @@ export const getStats = query({
 });
 
 export const sendMessage = action({
-  args: { teamId: v.string(), channel: v.string(), text: v.string(), threadTs: v.optional(v.string()) },
+  args: {
+    teamId: v.string(),
+    channel: v.string(),
+    text: v.string(),
+    threadTs: v.optional(v.string()),
+    username: v.optional(v.string()),
+    iconUrl: v.optional(v.string()),
+    iconEmoji: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     return await slack.postMessage(ctx, args);
   },

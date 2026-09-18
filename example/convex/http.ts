@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { components } from "./_generated/api";
-import { Slack } from "../../src/client/index.js";
+import { Slack, verifySlackSignature } from "../../src/client/index.js";
 import { httpAction } from "./_generated/server";
 
 const slack = new Slack(components.convexSlack, {
@@ -12,7 +12,75 @@ const slack = new Slack(components.convexSlack, {
 const http = httpRouter();
 
 http.route({ path: "/slack/events", method: "POST", handler: slack.eventsHandler });
-http.route({ path: "/slack/interactivity", method: "POST", handler: slack.interactivityHandler });
+
+// The default `slack.interactivityHandler` just records every button click,
+// modal submission, and shortcut invocation -- it doesn't know what any
+// particular callback_id should *do*. To react to one (here: opening the
+// invoice modal when the "Open invoice" shortcut fires) an app wraps the
+// handler instead of mounting it directly, so it can call `slack.openView`
+// with the same request's trigger_id before Slack's ~3s window closes.
+const interactivityHandler = httpAction(async (ctx, request) => {
+  const rawBody = await request.text();
+  const timestamp = request.headers.get("x-slack-request-timestamp");
+  const signature = request.headers.get("x-slack-signature");
+  if (!timestamp || !signature) {
+    return new Response(JSON.stringify({ error: "Missing Slack signature headers" }), { status: 400 });
+  }
+  if (!(await verifySlackSignature(process.env.SLACK_SIGNING_SECRET!, timestamp, rawBody, signature))) {
+    return new Response(JSON.stringify({ error: "Invalid signature" }), { status: 401 });
+  }
+
+  const form = new URLSearchParams(rawBody);
+  const payloadRaw = form.get("payload");
+  if (!payloadRaw) return new Response(JSON.stringify({ error: "Missing payload" }), { status: 400 });
+  const payload = JSON.parse(payloadRaw) as Record<string, unknown>;
+
+  const teamId = String((payload.team as Record<string, unknown> | undefined)?.id ?? "");
+  const userId = String((payload.user as Record<string, unknown> | undefined)?.id ?? "");
+  const type = String(payload.type ?? "");
+  const callbackId =
+    (payload.callback_id as string | undefined) ??
+    ((payload.view as Record<string, unknown> | undefined)?.callback_id as string | undefined);
+  const triggerId = (payload.trigger_id as string | undefined) ?? undefined;
+
+  if (teamId && userId && type) {
+    const firstAction = Array.isArray(payload.actions) ? (payload.actions[0] as Record<string, unknown>) : undefined;
+    await ctx.runMutation(components.convexSlack.lib.recordInteraction, {
+      teamId,
+      userId,
+      type: type as "block_actions" | "view_submission" | "view_closed" | "shortcut" | "message_action",
+      actionId: firstAction ? String(firstAction.action_id ?? "") || undefined : undefined,
+      callbackId,
+      triggerId,
+      payload: payloadRaw,
+    });
+  }
+
+  if (type === "shortcut" && callbackId === "open_invoice" && teamId && triggerId) {
+    await slack.openView(ctx, {
+      teamId,
+      triggerId,
+      view: {
+        type: "modal",
+        callback_id: "invoice_modal",
+        title: { type: "plain_text", text: "New invoice" },
+        submit: { type: "plain_text", text: "Send" },
+        blocks: [
+          {
+            type: "input",
+            block_id: "amount",
+            label: { type: "plain_text", text: "Amount" },
+            element: { type: "plain_text_input", action_id: "value" },
+          },
+        ],
+      },
+    });
+  }
+
+  return new Response(JSON.stringify({}), { status: 200, headers: { "Content-Type": "application/json" } });
+});
+
+http.route({ path: "/slack/interactivity", method: "POST", handler: interactivityHandler });
 http.route({ path: "/slack/commands", method: "POST", handler: slack.commandsHandler });
 
 // Link an "Add to Slack" button at:
