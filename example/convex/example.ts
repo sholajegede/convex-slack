@@ -87,6 +87,22 @@ export const sendMessage = action({
   },
 });
 
+export const uploadDemoFile = action({
+  args: { teamId: v.string(), channelId: v.string() },
+  handler: async (ctx, args) => {
+    const content = new TextEncoder().encode(
+      "Uploaded by the convex-slack example app via slack.uploadFile.\n",
+    );
+    return await slack.uploadFile(ctx, {
+      teamId: args.teamId,
+      channelId: args.channelId,
+      filename: "convex-slack-demo.txt",
+      content,
+      initialComment: "Here's a file uploaded straight from a Convex action.",
+    });
+  },
+});
+
 export const openInvoiceModal = action({
   args: { teamId: v.string(), triggerId: v.string() },
   handler: async (ctx, args) => {
