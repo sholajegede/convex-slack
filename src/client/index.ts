@@ -703,6 +703,30 @@ export class Slack {
     return json.channel;
   }
 
+  /**
+   * Removes the bot from a channel via its own token (`conversations.leave`).
+   * This is the reliable, documented way to make the bot actually leave --
+   * unlike the "Remove from this channel" action in Slack's Agents & Apps
+   * UI, which (per Slack's own semantics for chat:write.public apps) may
+   * only update the app's channel association without ever calling
+   * conversations.kick, so it can leave real membership untouched and never
+   * fire member_left_channel. Mirrors joinConversation: this call sets
+   * channels.botIsMember directly, so the local read model updates
+   * immediately regardless of whether Slack's webhook event arrives.
+   */
+  async leaveConversation(ctx: RunQueryCtx & RunMutationCtx, args: { teamId: string; channel: string }) {
+    const token = await this.resolveToken(ctx, args.teamId);
+    const json = await slackApiRequest<{ not_in_channel?: boolean }>(token, "conversations.leave", {
+      channel: args.channel,
+    });
+    await ctx.runMutation(this.component.lib.upsertChannel, {
+      teamId: args.teamId,
+      channelId: args.channel,
+      botIsMember: false,
+    });
+    return json;
+  }
+
   async inviteToConversation(ctx: RunQueryCtx & RunMutationCtx, args: InviteToConversationArgs) {
     const token = await this.resolveToken(ctx, args.teamId);
     return await slackApiRequest(token, "conversations.invite", {
