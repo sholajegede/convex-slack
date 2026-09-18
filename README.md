@@ -6,7 +6,7 @@ drive the full Slack platform — messaging, threads, Block Kit modals,
 slash commands, shortcuts, and files — directly from Convex functions.
 
 [![npm version](https://img.shields.io/npm/v/convex-slack.svg)](https://www.npmjs.com/package/convex-slack)
-[![Convex Component](https://www.convex.dev/components/badge/sholajegede/convex-slack)](https://www.convex.dev/components/convex-slack)
+[![Convex Component](https://www.convex.dev/components/badge/convex-slack)](https://www.convex.dev/components/convex-slack)
 [![npm downloads](https://img.shields.io/npm/dm/convex-slack.svg)](https://www.npmjs.com/package/convex-slack)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
