@@ -29,4 +29,3 @@ node_modules
 
 # Hand-written placeholder pending real `npx convex dev` codegen -- see
 # its own header comment. Never commit a stale/approximate ComponentApi.
-/src/component/_generated/component.ts
